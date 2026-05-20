@@ -1,0 +1,475 @@
+
+import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { motion } from 'framer-motion';
+import pb from '@/lib/pocketbaseClient';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import InstructorCard from '@/components/InstructorCard';
+
+/* ─── Schema: Team / AboutPage ───────────────────────────────────────────── */
+const TEAM_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: 'Instructores Certificados Lagree Querétaro | JJStudio',
+  url: 'https://jjstudio.mx/equipo',
+  description:
+    'Conoce al equipo de instructores certificados en Método Lagree de JJStudio Querétaro. Expertos en fitness boutique, rehabilitación y transformación corporal.',
+  mainEntity: {
+    '@type': 'ExerciseGym',
+    name: 'JJStudio',
+    url: 'https://jjstudio.mx',
+    employee: [
+      {
+        '@type': 'Person',
+        name: 'Sofía Mendoza',
+        jobTitle: 'Instructora Lagree – Certificación Level 3',
+        worksFor: { '@type': 'Organization', name: 'JJStudio' },
+      },
+      {
+        '@type': 'Person',
+        name: 'Diego Ramírez',
+        jobTitle: 'Especialista en Rehabilitación y Método Lagree',
+        worksFor: { '@type': 'Organization', name: 'JJStudio' },
+      },
+      {
+        '@type': 'Person',
+        name: 'Valentina Torres',
+        jobTitle: 'Entrenadora de Alto Rendimiento Lagree',
+        worksFor: { '@type': 'Organization', name: 'JJStudio' },
+      },
+      {
+        '@type': 'Person',
+        name: 'Mateo Sánchez',
+        jobTitle: 'Nutrición Deportiva y Método Lagree',
+        worksFor: { '@type': 'Organization', name: 'JJStudio' },
+      },
+    ],
+  },
+};
+
+const BREADCRUMB_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://jjstudio.mx' },
+    { '@type': 'ListItem', position: 2, name: 'Equipo', item: 'https://jjstudio.mx/equipo' },
+  ],
+};
+
+/* ─── Color tokens ───────────────────────────────────────────────────────── */
+const C = {
+  bg:         '#0a0a0a',
+  bgMuted:    '#111111',
+  bgCard:     '#1a1a1a',
+  bgCardHover:'#222222',
+  red:        '#e53e3e',
+  redDim:     'rgba(229,62,62,0.12)',
+  redBorder:  'rgba(229,62,62,0.3)',
+  white:      '#ffffff',
+  grey:       '#a0aec0',
+  greyLight:  '#cbd5e0',
+  divider:    '#2d2d2d',
+};
+
+/* ─── Skeleton pulse keyframe (injected once) ────────────────────────────── */
+const PULSE_STYLE = `
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .sk-pulse { animation: pulse 1.6s ease-in-out infinite; }
+`;
+
+const EquipoPage = () => {
+  const [instructors, setInstructors]   = useState([]);
+  const [isLoading, setIsLoading]       = useState(true);
+
+  useEffect(() => {
+    const fetchInstructors = async () => {
+      try {
+        const records = await pb.collection('instructors').getFullList({ $autoCancel: false });
+        const instructorsWithPhotos = records.map(instructor => ({
+          ...instructor,
+          photo: instructor.photo
+            ? pb.files.getUrl(instructor, instructor.photo)
+            : 'https://images.unsplash.com/photo-1679500502523-b40fb6f0563d',
+        }));
+        setInstructors(instructorsWithPhotos);
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchInstructors();
+  }, []);
+
+  const placeholderInstructors = [
+    {
+      id: '1',
+      name: 'Sofía Mendoza',
+      specialty: 'Certificación Lagree Level 3',
+      bio: 'Con más de 8 años de experiencia en fitness boutique, Sofía se especializa en transformaciones corporales para profesionistas. Su enfoque combina técnica impecable con motivación personalizada.',
+      photo: 'https://images.unsplash.com/photo-1679500502523-b40fb6f0563d',
+    },
+    {
+      id: '2',
+      name: 'Diego Ramírez',
+      specialty: 'Especialista en Rehabilitación',
+      bio: 'Fisioterapeuta certificado y experto en Método Lagree. Diego trabaja con atletas y ejecutivos que buscan resultados sin comprometer la salud articular.',
+      photo: 'https://images.unsplash.com/photo-1679500683809-35c8236381b6',
+    },
+    {
+      id: '3',
+      name: 'Valentina Torres',
+      specialty: 'Entrenadora de Alto Rendimiento',
+      bio: 'Ex atleta profesional con certificación internacional en Lagree. Valentina diseña programas intensivos que maximizan resultados en tiempo mínimo.',
+      photo: 'https://images.unsplash.com/photo-1637666133087-23b7138ea721',
+    },
+    {
+      id: '4',
+      name: 'Mateo Sánchez',
+      specialty: 'Nutrición Deportiva y Lagree',
+      bio: 'Combina su expertise en nutrición con el Método Lagree para ofrecer transformaciones integrales. Especialista en composición corporal.',
+      photo: 'https://images.unsplash.com/photo-1586173462302-a14010ea2755',
+    },
+  ];
+
+  const displayInstructors = instructors.length > 0 ? instructors : placeholderInstructors;
+
+  const certBadges = [
+    'Certificación Oficial Lagree',
+    'Actualización Continua',
+    'Grupos Máx. 8 Personas',
+    'Supervisión Personalizada',
+  ];
+
+  return (
+    <>
+      <Helmet>
+        {/* ── Core meta ───────────────────────────────────────────────────── */}
+        <html lang="es-MX" />
+        <title>Instructores Certificados Lagree Querétaro | Equipo JJStudio</title>
+        <meta
+          name="description"
+          content="Conoce al equipo de instructores certificados en Método Lagree de JJStudio Querétaro. Especialistas en fitness boutique, rehabilitación, alto rendimiento y nutrición deportiva."
+        />
+        <meta
+          name="keywords"
+          content="instructores lagree queretaro, equipo jjstudio, certificados lagree, entrenadores fitness boutique queretaro, método lagree instructores"
+        />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://jjstudio.mx/equipo" />
+
+        {/* ── Open Graph ──────────────────────────────────────────────────── */}
+        <meta property="og:type"         content="website" />
+        <meta property="og:locale"       content="es_MX" />
+        <meta property="og:site_name"    content="JJStudio" />
+        <meta property="og:title"        content="Instructores Certificados Lagree Querétaro | Equipo JJStudio" />
+        <meta property="og:description"  content="Conoce al equipo de instructores certificados en Método Lagree de JJStudio Querétaro." />
+        <meta property="og:url"          content="https://jjstudio.mx/equipo" />
+        <meta property="og:image"        content="https://jjstudio.mx/og-equipo.jpg" />
+        <meta property="og:image:width"  content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt"    content="Equipo de instructores JJStudio – Método Lagree Querétaro" />
+
+        {/* ── Twitter Card ────────────────────────────────────────────────── */}
+        <meta name="twitter:card"        content="summary_large_image" />
+        <meta name="twitter:title"       content="Instructores Certificados Lagree Querétaro | Equipo JJStudio" />
+        <meta name="twitter:description" content="Conoce al equipo de instructores certificados en Método Lagree de JJStudio Querétaro." />
+        <meta name="twitter:image"       content="https://jjstudio.mx/og-equipo.jpg" />
+
+        {/* ── Structured Data ─────────────────────────────────────────────── */}
+        <script type="application/ld+json">{JSON.stringify(TEAM_SCHEMA)}</script>
+        <script type="application/ld+json">{JSON.stringify(BREADCRUMB_SCHEMA)}</script>
+
+        <style>{PULSE_STYLE}</style>
+      </Helmet>
+
+      <div style={{ minHeight: '100vh', backgroundColor: C.bg }}>
+        <Header />
+
+        {/* ── HERO ── */}
+        <section
+          aria-label="Equipo de instructores JJStudio Querétaro"
+          style={{
+            padding: '5rem 0',
+            backgroundColor: C.bgMuted,
+            borderBottom: `1px solid ${C.divider}`,
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Red decorative bar top-left */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0,
+            width: '6px', height: '100%',
+            background: `linear-gradient(to bottom, ${C.red}, transparent)`,
+          }} />
+
+          <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem' }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              style={{ textAlign: 'center', maxWidth: '48rem', margin: '0 auto' }}
+            >
+              {/* Eyebrow */}
+              <span style={{
+                display: 'inline-block',
+                backgroundColor: C.redDim,
+                color: C.red,
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                padding: '0.35rem 1rem',
+                borderRadius: '9999px',
+                marginBottom: '1.25rem',
+                border: `1px solid ${C.redBorder}`,
+              }}>
+                Instructores Certificados
+              </span>
+
+              {/* H1 — keyword-targeted */}
+              <h1
+                style={{
+                  fontFamily: 'Playfair Display, serif',
+                  fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+                  fontWeight: 700,
+                  color: C.white,
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.15,
+                  marginBottom: '1.25rem',
+                }}
+              >
+                Nuestro Equipo
+                <span style={{ display: 'block', color: C.red, marginTop: '0.3rem' }}>
+                  de Expertos en Lagree
+                </span>
+              </h1>
+              <p style={{ fontSize: '1.125rem', color: C.grey, lineHeight: 1.7, maxWidth: '36rem', margin: '0 auto' }}>
+                Instructores certificados y apasionados por tu transformación.
+                Cada sesión en JJStudio Querétaro es supervisada por especialistas
+                en Método Lagree.
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ── INSTRUCTORS GRID ── */}
+        <section
+          aria-label="Instructores JJStudio"
+          style={{ padding: '5rem 0', backgroundColor: C.bg }}
+        >
+          <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1.5rem' }}>
+            {isLoading ? (
+              /* ── Skeleton ── */
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '2rem',
+              }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="sk-pulse" style={{
+                    backgroundColor: C.bgCard,
+                    borderRadius: '1rem',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{ aspectRatio: '3/4', backgroundColor: '#222' }} />
+                    <div style={{ padding: '1.25rem' }}>
+                      <div style={{ height: '1.25rem', backgroundColor: '#2a2a2a', borderRadius: '0.25rem', marginBottom: '0.75rem' }} />
+                      <div style={{ height: '1rem', backgroundColor: '#2a2a2a', borderRadius: '0.25rem', width: '60%' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : displayInstructors.length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gap: '2rem',
+              }}>
+                {displayInstructors.map((instructor, index) => (
+                  <motion.article
+                    key={instructor.id}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    aria-label={`Instructor ${instructor.name}`}
+                    style={{
+                      backgroundColor: C.bgCard,
+                      borderRadius: '1rem',
+                      overflow: 'hidden',
+                      border: `1px solid ${C.divider}`,
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+                      transition: 'border-color 0.25s, transform 0.25s',
+                    }}
+                    whileHover={{ y: -4, borderColor: C.red }}
+                  >
+                    {/* Photo */}
+                    <div style={{ aspectRatio: '3/4', overflow: 'hidden', position: 'relative' }}>
+                      <img
+                        src={instructor.photo}
+                        alt={`${instructor.name} – Instructor Método Lagree JJStudio Querétaro`}
+                        loading="lazy"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.4s ease',
+                        }}
+                        onMouseEnter={e => (e.target.style.transform = 'scale(1.05)')}
+                        onMouseLeave={e => (e.target.style.transform = 'scale(1)')}
+                      />
+                      {/* Red gradient overlay at bottom */}
+                      <div style={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0,
+                        height: '40%',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)',
+                      }} />
+                      {/* Specialty badge over photo */}
+                      <div style={{
+                        position: 'absolute', bottom: '0.85rem', left: '0.85rem', right: '0.85rem',
+                      }}>
+                        <span style={{
+                          display: 'inline-block',
+                          backgroundColor: C.redDim,
+                          border: `1px solid ${C.redBorder}`,
+                          color: C.red,
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '9999px',
+                          backdropFilter: 'blur(4px)',
+                        }}>
+                          {instructor.specialty}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ padding: '1.25rem' }}>
+                      <h2 style={{
+                        fontFamily: 'Playfair Display, serif',
+                        fontSize: '1.2rem',
+                        fontWeight: 700,
+                        color: C.white,
+                        marginBottom: '0.6rem',
+                      }}>
+                        {instructor.name}
+                      </h2>
+                      <p style={{
+                        fontSize: '0.875rem',
+                        color: C.grey,
+                        lineHeight: 1.65,
+                      }}>
+                        {instructor.bio}
+                      </p>
+                    </div>
+
+                    {/* Red bottom accent bar */}
+                    <div style={{
+                      height: '3px',
+                      background: `linear-gradient(to right, ${C.red}, transparent)`,
+                    }} />
+                  </motion.article>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+                <p style={{ color: C.grey, fontSize: '1.1rem' }}>
+                  No hay instructores disponibles en este momento.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ── CERTIFICATION SECTION ── */}
+        <section
+          aria-label="Certificación y excelencia JJStudio"
+          style={{
+            padding: '5rem 0',
+            backgroundColor: C.bgMuted,
+            borderTop: `1px solid ${C.divider}`,
+          }}
+        >
+          <div style={{ maxWidth: '56rem', margin: '0 auto', padding: '0 1.5rem' }}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              style={{ textAlign: 'center' }}
+            >
+              <h2
+                style={{
+                  fontFamily: 'Playfair Display, serif',
+                  fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
+                  fontWeight: 700,
+                  color: C.white,
+                  marginBottom: '1.5rem',
+                }}
+              >
+                Certificación y Excelencia
+              </h2>
+              <p style={{
+                fontSize: '1.1rem', color: C.grey, lineHeight: 1.8,
+                maxWidth: '42rem', margin: '0 auto 1.5rem',
+              }}>
+                Todos nuestros instructores cuentan con certificación oficial en Método Lagree
+                y actualizan constantemente sus conocimientos para ofrecerte la mejor experiencia
+                en Querétaro.
+              </p>
+              <p style={{
+                fontSize: '1rem', color: C.greyLight, lineHeight: 1.8,
+                maxWidth: '42rem', margin: '0 auto 3rem',
+              }}>
+                Cada miembro del equipo JJStudio está comprometido con tu seguridad, progreso
+                y satisfacción. Trabajamos juntos para que alcances tu máximo potencial.
+              </p>
+
+              {/* Badge row */}
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.75rem',
+                justifyContent: 'center',
+              }}>
+                {certBadges.map((badge, i) => (
+                  <span key={i} style={{
+                    backgroundColor: C.bgCard,
+                    border: `1px solid ${C.redBorder}`,
+                    color: C.greyLight,
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    padding: '0.45rem 1rem',
+                    borderRadius: '9999px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                  }}>
+                    <span style={{
+                      width: '6px', height: '6px',
+                      borderRadius: '50%',
+                      backgroundColor: C.red,
+                      display: 'inline-block',
+                    }} />
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        <Footer />
+      </div>
+    </>
+  );
+};
+
+export default EquipoPage;
